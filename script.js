@@ -1,4 +1,5 @@
-let tasks = [];
+// let tasks = [];
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 let currentFilter = "all";
 const input = document.getElementById('task-input');
 const addBtn = document.getElementById('add-btn');
@@ -6,17 +7,17 @@ const list = document.getElementById('task-list');
 
 
 //ts a callback
-addBtn.addEventListener("click", () => {
-    let text = input.value;
+// addBtn.addEventListener("click", () => {
+//     let text = input.value;
 
-    tasks.push({
-        id: Date.now(),
-        text: text,
-        completed: false
-    });
-    input.value = "";
-    renderTasks();
-});
+//     tasks.push({
+//         id: Date.now(),
+//         text: text,
+//         completed: false
+//     });
+//     input.value = "";
+//     renderTasks();
+// });
 
 //reder tasks
 function renderTasks() {
@@ -64,6 +65,7 @@ list.addEventListener("click", (e) => {
     renderTasks();
 });
 
+//change colour of the active or selected button or option
 document.querySelector(".filters").addEventListener("click", (e) => {
     if (e.target.tagName === "BUTTON") {
         //update filter state
@@ -79,3 +81,36 @@ document.querySelector(".filters").addEventListener("click", (e) => {
         renderTasks();
     }
 });
+
+
+//LOCAL STORAGE
+//add task
+addBtn.addEventListener("click", () => {
+    let text = input.value;
+tasks.push({
+    id: Date.now(),
+    text:text,
+    completed:false
+});
+localStorage.setItem("tasks", JSON.stringify(tasks));
+renderTasks();
+});
+
+//delete task, tracking del button here, uf clicked then we can del from localsto too
+if(e.target.tagName === "BUTTON"){
+tasks=tasks.filter(task => task.id !== id);
+localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+// renderTasks();
+
+//toggle complete
+if(e.target.type === "checkbox"){
+tasks= tasks.map(task=>{
+    if (task.id === id){
+        task.completed=!task.completed;
+    }
+    return task;
+});
+localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+renderTasks();
