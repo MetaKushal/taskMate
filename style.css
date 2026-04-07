@@ -72,3 +72,11 @@ h1 {
   background: black;
   color: white;
 }
+
+.empty-state {
+  text-align: center;
+  color: #aaa;
+  font-size: 14px;
+  font-style: italic;
+  padding: 30px 0;
+}

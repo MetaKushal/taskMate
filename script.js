@@ -1,116 +1,99 @@
-// let tasks = [];
+// ─── State ────────────────────────────────────────────────────────────────────
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 let currentFilter = "all";
-const input = document.getElementById('task-input');
-const addBtn = document.getElementById('add-btn');
-const list = document.getElementById('task-list');
 
+// ─── DOM References ───────────────────────────────────────────────────────────
+const input   = document.getElementById("task-input");
+const addBtn  = document.getElementById("add-btn");
+const list    = document.getElementById("task-list");
+const filters = document.querySelector(".filters");
 
-//ts a callback
-// addBtn.addEventListener("click", () => {
-//     let text = input.value;
+// ─── Persistence ──────────────────────────────────────────────────────────────
+function saveTasks() {
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+}
 
-//     tasks.push({
-//         id: Date.now(),
-//         text: text,
-//         completed: false
-//     });
-//     input.value = "";
-//     renderTasks();
-// });
+// ─── Stats  ────────────────────────────────────────────────────────────
+function updateStats() {
+  const total     = tasks.length;
+  const completed = tasks.filter(t => t.completed).length;
+  const pending   = total - completed;
 
-//reder tasks
+  document.getElementById("count-pending").textContent   = `${pending} task${pending !== 1 ? "s" : ""} left`;
+  document.getElementById("count-completed").textContent = `${completed} completed`;
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
 function renderTasks() {
-    list.innerHTML = ""; //clear old ui
-    let filteredTasks = tasks;
+  const filtered = tasks.filter(task => {
+    if (currentFilter === "completed") return task.completed;
+    if (currentFilter === "pending")   return !task.completed;
+    return true;
+  });
 
-    if (currentFilter === "completed") {
-        filteredTasks = tasks.filter(task => task.completed);
-    } else if (currentFilter === "pending") {
-        filteredTasks = tasks.filter(task => !task.completed);
+    if(filtered.length === 0){
+        list.innerHTML = `<li class="empty-state">No tasks ${currentFilter}</li>`;
     }
-
-    filteredTasks.forEach(task => {
-        let li = document.createElement('li');
-        li.className = task.completed ? "task completed" : "task";
-
-        li.innerHTML = `
-         <input type="checkbox" data-id="${task.id}" ${task.completed ? "checked" : ""}>
-         <span>${task.text}</span>
-         <button data-id="${task.id}">Delete</button>
-        `;
-
-        list.appendChild(li);
-    });
+    else{
+  list.innerHTML = filtered.map(task => `
+    <li class="task ${task.completed ? "completed" : ""}">
+      <input type="checkbox" data-id="${task.id}" ${task.completed ? "checked" : ""}>
+      <span>${task.text}</span>
+      <button data-id="${task.id}">Delete</button>
+    </li>
+  `).join("");
 }
 
-//delete tasks
+updateStats();
+}
+
+// ─── Add Task ─────────────────────────────────────────────────────────────────
+function addTask() {
+  const text = input.value.trim();
+  if (!text) return;
+
+  tasks.push({ id: Date.now(), text, completed: false });
+  input.value = "";
+  input.focus();
+  saveTasks();
+  renderTasks();
+}
+
+// ─── Enter Listeners ──────────────────────────────────────────────────────────
+addBtn.addEventListener("click", addTask);
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") addTask();
+});
+
+// ─── Delete / Toggle ──────────────────────────────────────────────────────────
 list.addEventListener("click", (e) => {
-    let id = Number(e.target.dataset.id);
+  const id = Number(e.target.dataset.id);
 
-    //delete
-    if (e.target.tagName === "BUTTON") {
-        tasks=tasks.filter(task => task.id !== id);
-    }
+  if (e.target.tagName === "BUTTON") {
+    tasks = tasks.filter(task => task.id !== id);
+  }
 
-    //toggle complete
-    if(e.target.type === "checkbox"){
-        tasks=tasks.map(task=>{
-            if (task.id === id){
-                task.completed=!task.completed;
-            }
-            return task;
-        });
-    }
-    renderTasks();
+  if (e.target.type === "checkbox") {
+    tasks = tasks.map(task =>
+      task.id === id ? { ...task, completed: !task.completed } : task
+    );
+  }
+
+  saveTasks();
+  renderTasks();
 });
 
-//change colour of the active or selected button or option
-document.querySelector(".filters").addEventListener("click", (e) => {
-    if (e.target.tagName === "BUTTON") {
-        //update filter state
-        currentFilter = e.target.dataset.filter;
+// ─── Filters ──────────────────────────────────────────────────────────────────
+filters.addEventListener("click", (e) => {
+  if (e.target.tagName !== "BUTTON") return;
 
-        //remove active from all buttons
-        document.querySelectorAll(".filters button").forEach(btn => {
-            btn.classList.remove("active");
-        });
+  currentFilter = e.target.dataset.filter;
 
-        //add active to cliked btn
-        e.target.classList.add("active");
-        renderTasks();
-    }
+  filters.querySelectorAll("button").forEach(btn => btn.classList.remove("active"));
+  e.target.classList.add("active");
+
+  renderTasks();
 });
 
-
-//LOCAL STORAGE
-//add task
-addBtn.addEventListener("click", () => {
-    let text = input.value;
-tasks.push({
-    id: Date.now(),
-    text:text,
-    completed:false
-});
-localStorage.setItem("tasks", JSON.stringify(tasks));
-renderTasks();
-});
-
-//delete task, tracking del button here, uf clicked then we can del from localsto too
-if(e.target.tagName === "BUTTON"){
-tasks=tasks.filter(task => task.id !== id);
-localStorage.setItem("tasks", JSON.stringify(tasks));
-}
-// renderTasks();
-
-//toggle complete
-if(e.target.type === "checkbox"){
-tasks= tasks.map(task=>{
-    if (task.id === id){
-        task.completed=!task.completed;
-    }
-    return task;
-});
-localStorage.setItem("tasks", JSON.stringify(tasks));
-}
+// ─── Init ─────────────────────────────────────────────────────────────────────
 renderTasks();
