@@ -1,155 +1,158 @@
-// ─── State ────────────────────────────────────────────────────────────────────
+// ─── State ─────────────────────────────────────────────────────────────
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 let currentFilter = "all";
 
-// ─── DOM References ───────────────────────────────────────────────────────────
+// ─── DOM ───────────────────────────────────────────────────────────────
 const input   = document.getElementById("task-input");
 const addBtn  = document.getElementById("add-btn");
 const list    = document.getElementById("task-list");
 const filters = document.querySelector(".filters");
 
-// ─── Persistence ──────────────────────────────────────────────────────────────
+// ─── Persistence ───────────────────────────────────────────────────────
 function saveTasks() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
 }
 
-// ─── Stats  ────────────────────────────────────────────────────────────
+// ─── Stats ─────────────────────────────────────────────────────────────
 function updateStats() {
   const total     = tasks.length;
   const completed = tasks.filter(t => t.completed).length;
   const pending   = total - completed;
 
-  document.getElementById("count-pending").textContent   = `${pending} task${pending !== 1 ? "s" : ""} left`;
-  document.getElementById("count-completed").textContent = `${completed} completed`;
+  document.getElementById("count-pending").textContent   =
+    `${pending} task${pending !== 1 ? "s" : ""} left`;
+
+  document.getElementById("count-completed").textContent =
+    `${completed} completed`;
 }
 
-// ─── Render ───────────────────────────────────────────────────────────────────
+// ─── Render ────────────────────────────────────────────────────────────
 function renderTasks() {
   const filtered = tasks.filter(task => {
     if (currentFilter === "completed") return task.completed;
-    if (currentFilter === "pending")   return !task.completed;
+    if (currentFilter === "pending") return !task.completed;
     return true;
   });
 
-    if(filtered.length === 0){
-        list.innerHTML = `<li class="empty-state">No tasks ${currentFilter}</li>`;
-    }
-    else{
-  list.innerHTML = filtered.map(task => `
-  <li class="task ${task.completed ? "completed" : ""}" data-id="${task.id}">
-    <input type="checkbox" data-id="${task.id}" ${task.completed ? "checked" : ""}>
-    <span>${task.text}</span>
-    <button data-id="${task.id}">Delete</button>
-  </li>
-`).join("");
+  if (filtered.length === 0) {
+    list.innerHTML = `<li class="empty-state">No tasks ${currentFilter}</li>`;
+  } else {
+    list.innerHTML = filtered.map(task => `
+      <li class="task ${task.completed ? "completed" : ""}" data-id="${task.id}">
+        <input type="checkbox" data-id="${task.id}" ${task.completed ? "checked" : ""}>
+        <span>${task.text}</span>
+        <button data-id="${task.id}">Delete</button>
+      </li>
+    `).join("");
+  }
+
+  updateStats();
 }
 
-updateStats();
-}
-
-// ─── Add Task ─────────────────────────────────────────────────────────────────
+// ─── Add Task ──────────────────────────────────────────────────────────
 function addTask() {
   const text = input.value.trim();
   if (!text) return;
 
-  tasks.push({ id: Date.now(), text, completed: false });
+  tasks.push({
+    id: Date.now(),
+    text,
+    completed: false
+  });
+
   input.value = "";
   input.focus();
+
   saveTasks();
   renderTasks();
 }
 
-// ─── Enter Listeners ──────────────────────────────────────────────────────────
 addBtn.addEventListener("click", addTask);
 input.addEventListener("keydown", (e) => {
   if (e.key === "Enter") addTask();
 });
 
-// ─── Delete / Toggle ──────────────────────────────────────────────────────────
+// ─── Delete + Toggle (FIXED) ───────────────────────────────────────────
 list.addEventListener("click", (e) => {
-
-  // 🛑 Ignore clicks if editing is happening
-  if (e.target.tagName === "INPUT" && e.target.type === "text") return;
   const id = Number(e.target.dataset.id);
+  let hasChanged = false;
 
+  // delete
   if (e.target.tagName === "BUTTON") {
     tasks = tasks.filter(task => task.id !== id);
+    hasChanged = true;
   }
 
+  // toggle
   if (e.target.type === "checkbox") {
     tasks = tasks.map(task =>
-      task.id === id ? { ...task, completed: !task.completed } : task
+      task.id === id
+        ? { ...task, completed: !task.completed }
+        : task
     );
+    hasChanged = true;
   }
 
-  saveTasks();
-  renderTasks();
+  // Only re-render if a destructive action was taken
+  if (hasChanged) {
+    saveTasks();
+    renderTasks();
+  }
 });
 
-// ─── Filters ──────────────────────────────────────────────────────────────────
-filters.addEventListener("click", (e) => {
-  if (e.target.tagName !== "BUTTON") return;
-
-  currentFilter = e.target.dataset.filter;
-
-  filters.querySelectorAll("button").forEach(btn => btn.classList.remove("active"));
-  e.target.classList.add("active");
-
-  renderTasks();
-});
-
-// ─── edit feature ──────────────────────────────────────────────────────────────────
+// ─── Edit Task (Double Click) ──────────────────────────────────────────
 list.addEventListener("dblclick", (e) => {
-  console.log("dblclick", e.target);
+  // 1. Find the closest list item so we can click anywhere on the row
+  const li = e.target.closest("li.task");
+  if (!li) return;
 
-    // 1. Only trigger when span is double-clicked
-    if (e.target.tagName !== "span") return;
-    console.log(e.target.tagName);
+  // Ignore double clicks on the delete button or checkbox
+  if (e.target.tagName === "BUTTON" || e.target.tagName === "INPUT") return;
 
-    const li = e.target.closest("li");
-    const id = Number(li.dataset.id);
-    const oldText = e.target.textContent;
+  // Grab the span and the text
+  const span = li.querySelector("span");
+  const id = Number(li.dataset.id);
+  const oldText = span.textContent;
 
-    // 2. Create input
-    const editInput = document.createElement("input");
-    editInput.type = "text";
-    editInput.value = oldText;
+  // Create input
+  const editInput = document.createElement("input");
+  editInput.type = "text";
+  editInput.value = oldText;
 
-    // 3. Replace span with input
-    e.target.replaceWith(editInput);
+  // Replace span with input
+  span.replaceWith(editInput);
+
+  // 2. Use setTimeout to wait for the browser's double-click text selection 
+  // to finish before focusing. This prevents the "instant blur" bug.
+  setTimeout(() => {
     editInput.focus();
+    editInput.select(); // Bonus: Highlights the text so you can start typing!
+  }, 10);
 
-    // 🛑 prevent click events from interfering
-    editInput.addEventListener("click", (e) => e.stopPropagation());
+  function saveEdit() {
+    const newText = editInput.value.trim();
 
-    // 4. Define update function
-    function updateTask() {
-        const newText = editInput.value.trim();
-
-        // If empty → just re-render (cancel edit)
-        if (!newText) {
-            renderTasks();
-            return;
-        }
-
-        // 5. Update state
-        tasks = tasks.map(task =>
-            task.id === id ? { ...task, text: newText } : task
-        );
-
-        // 6. Save + re-render
-        saveTasks();
-        renderTasks();
+    // If there's valid text, update it
+    if (newText) {
+      tasks = tasks.map(task =>
+        task.id === id ? { ...task, text: newText } : task
+      );
+      saveTasks();
     }
+    
+    // Always re-render to turn the input back into a span
+    renderTasks(); 
+  }
 
-    // 7. Save on Enter
-    editInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") updateTask();
-    });
+  // enter = save, escape = cancel
+  editInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") saveEdit();
+    if (e.key === "Escape") renderTasks(); // Bonus: Hit escape to cancel editing
+  });
 
-    // 8. Save on blur
-    editInput.addEventListener("blur", updateTask);
+  // blur = save (clicking away from the input)
+  editInput.addEventListener("blur", saveEdit);
 });
 
-// ─── Init ─────────────────────────────────────────────────────────────────────
+// ─── Init ──────────────────────────────────────────────────────────────
 renderTasks();
