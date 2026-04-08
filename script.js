@@ -1,12 +1,15 @@
 // ─── State ─────────────────────────────────────────────────────────────
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-let currentFilter = "all";
+// 🚀 PHASE 2: Load the saved filter, or default to "all"
+let currentFilter = localStorage.getItem("todo-filter") || "all";
 
 // ─── DOM ───────────────────────────────────────────────────────────────
-const input   = document.getElementById("task-input");
-const addBtn  = document.getElementById("add-btn");
-const list    = document.getElementById("task-list");
-const filters = document.querySelector(".filters");
+const input       = document.getElementById("task-input");
+const addBtn      = document.getElementById("add-btn");
+const list        = document.getElementById("task-list");
+const filters     = document.querySelector(".filters");
+const clearBtn    = document.getElementById("clear-completed");
+const themeToggle = document.getElementById("theme-toggle"); 
 
 // ─── Persistence ───────────────────────────────────────────────────────
 function saveTasks() {
@@ -34,8 +37,19 @@ function renderTasks() {
     return true;
   });
 
+  // 🚀 PHASE 3: Smart Empty States
   if (filtered.length === 0) {
-    list.innerHTML = `<li class="empty-state">No tasks ${currentFilter}</li>`;
+    let emptyMessage = "No tasks found.";
+    
+    if (tasks.length === 0) {
+      emptyMessage = "No tasks yet. Add one above! ✨";
+    } else if (currentFilter === "pending") {
+      emptyMessage = "All caught up! 🎉";
+    } else if (currentFilter === "completed") {
+      emptyMessage = "No completed tasks yet. Get to work! 🔥";
+    }
+
+    list.innerHTML = `<li class="empty-state">${emptyMessage}</li>`;
   } else {
     list.innerHTML = filtered.map(task => `
       <li class="task ${task.completed ? "completed" : ""}" data-id="${task.id}">
@@ -46,10 +60,25 @@ function renderTasks() {
     `).join("");
   }
 
+  // 🚀 PHASE 2: Ensure the correct filter button is visually active on load/render
+  filters.querySelectorAll("button").forEach(btn => {
+    if (btn.dataset.filter === currentFilter) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
+  });
+
   updateStats();
 }
 
 // ─── Add Task ──────────────────────────────────────────────────────────
+addBtn.disabled = true;
+
+input.addEventListener("input", () => {
+  addBtn.disabled = input.value.trim() === "";
+});
+
 function addTask() {
   const text = input.value.trim();
   if (!text) return;
@@ -62,6 +91,7 @@ function addTask() {
 
   input.value = "";
   input.focus();
+  addBtn.disabled = true;
 
   saveTasks();
   renderTasks();
@@ -72,15 +102,24 @@ input.addEventListener("keydown", (e) => {
   if (e.key === "Enter") addTask();
 });
 
-// ─── Delete + Toggle (FIXED) ───────────────────────────────────────────
+// ─── Delete + Toggle ───────────────────────────────────────────────────
 list.addEventListener("click", (e) => {
   const id = Number(e.target.dataset.id);
-  let hasChanged = false;
 
   // delete
   if (e.target.tagName === "BUTTON") {
-    tasks = tasks.filter(task => task.id !== id);
-    hasChanged = true;
+    if (confirm("Are you sure you want to delete this task?")) {
+      // 🚀 PHASE 2: Find the row and trigger the fade-out CSS animation
+      const li = e.target.closest("li");
+      li.classList.add("fade-out");
+
+      // Wait 250ms for the animation to finish before actually removing it
+      setTimeout(() => {
+        tasks = tasks.filter(task => task.id !== id);
+        saveTasks();
+        renderTasks();
+      }, 250); 
+    }
   }
 
   // toggle
@@ -90,11 +129,6 @@ list.addEventListener("click", (e) => {
         ? { ...task, completed: !task.completed }
         : task
     );
-    hasChanged = true;
-  }
-
-  // Only re-render if a destructive action was taken
-  if (hasChanged) {
     saveTasks();
     renderTasks();
   }
@@ -102,37 +136,29 @@ list.addEventListener("click", (e) => {
 
 // ─── Edit Task (Double Click) ──────────────────────────────────────────
 list.addEventListener("dblclick", (e) => {
-  // 1. Find the closest list item so we can click anywhere on the row
   const li = e.target.closest("li.task");
   if (!li) return;
 
-  // Ignore double clicks on the delete button or checkbox
   if (e.target.tagName === "BUTTON" || e.target.tagName === "INPUT") return;
 
-  // Grab the span and the text
   const span = li.querySelector("span");
   const id = Number(li.dataset.id);
   const oldText = span.textContent;
 
-  // Create input
   const editInput = document.createElement("input");
   editInput.type = "text";
   editInput.value = oldText;
 
-  // Replace span with input
   span.replaceWith(editInput);
 
-  // 2. Use setTimeout to wait for the browser's double-click text selection 
-  // to finish before focusing. This prevents the "instant blur" bug.
   setTimeout(() => {
     editInput.focus();
-    editInput.select(); // Bonus: Highlights the text so you can start typing!
+    editInput.select(); 
   }, 10);
 
   function saveEdit() {
     const newText = editInput.value.trim();
 
-    // If there's valid text, update it
     if (newText) {
       tasks = tasks.map(task =>
         task.id === id ? { ...task, text: newText } : task
@@ -140,18 +166,59 @@ list.addEventListener("dblclick", (e) => {
       saveTasks();
     }
     
-    // Always re-render to turn the input back into a span
     renderTasks(); 
   }
 
-  // enter = save, escape = cancel
   editInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") saveEdit();
-    if (e.key === "Escape") renderTasks(); // Bonus: Hit escape to cancel editing
+    if (e.key === "Escape") renderTasks(); 
   });
 
-  // blur = save (clicking away from the input)
   editInput.addEventListener("blur", saveEdit);
+});
+
+// ─── Clear Completed ───────────────────────────────────────────────────
+clearBtn.addEventListener("click", () => {
+  const hasCompletedTasks = tasks.some(task => task.completed);
+  if (!hasCompletedTasks) return;
+
+  if (confirm("Are you sure you want to remove all completed tasks?")) {
+    tasks = tasks.filter(task => !task.completed);
+    saveTasks();
+    renderTasks();
+  }
+});
+
+// ─── Filters ───────────────────────────────────────────────────────────
+filters.addEventListener("click", (e) => {
+  if (e.target.tagName !== "BUTTON") return;
+
+  currentFilter = e.target.dataset.filter;
+  
+  // 🚀 PHASE 2: Save the filter choice so it remembers on refresh
+  localStorage.setItem("todo-filter", currentFilter);
+
+  renderTasks(); 
+});
+
+// 🚀 PHASE 3: Dark Mode Logic ───────────────────────────────────────────
+// 1. Check local storage on load
+if (localStorage.getItem("theme") === "dark") {
+  document.body.classList.add("dark");
+  themeToggle.textContent = "☀️";
+}
+
+// 2. Listen for clicks to toggle
+themeToggle.addEventListener("click", () => {
+  document.body.classList.toggle("dark");
+  
+  const isDark = document.body.classList.contains("dark");
+  
+  // Update button icon
+  themeToggle.textContent = isDark ? "☀️" : "🌙";
+  
+  // Save preference
+  localStorage.setItem("theme", isDark ? "dark" : "light");
 });
 
 // ─── Init ──────────────────────────────────────────────────────────────
