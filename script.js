@@ -222,18 +222,47 @@ themeToggle.addEventListener("click", () => {
 });
 
 //Drag and Drop logic ──────────────────────────────────────────────────────────────
+// 🚀 BONUS: Drag and Drop Reordering ────────────────────────────────────
 let draggedItem = null;
 
-//wehen we start dragging
+// 1. When we start dragging
 list.addEventListener("dragstart", (e) => {
   const li = e.target.closest("li.task");
   if (!li) return;
 
   draggedItem = li;
+  // Make it look grabbed
   setTimeout(() => li.classList.add("dragging"), 0);
 });
 
-//when drop, let go
+// 🔥 NEW: Some browsers require this to allow dropping
+list.addEventListener("dragenter", (e) => {
+  e.preventDefault();
+});
+
+// 2. While dragging OVER other items
+list.addEventListener("dragover", (e) => {
+  e.preventDefault(); // CRITICAL: Tells the browser "this is a drop zone"
+  e.dataTransfer.dropEffect = "move"; // Forces the cursor to show a "move" icon
+
+  const afterElement = getDragAfterElement(list, e.clientY);
+  const draggable = document.querySelector(".dragging");
+
+  if (!draggable) return;
+
+  if (afterElement == null) {
+    list.appendChild(draggable);
+  } else {
+    list.insertBefore(draggable, afterElement);
+  }
+});
+
+// 🔥 NEW: Stop the browser from doing weird default things on drop
+list.addEventListener("drop", (e) => {
+  e.preventDefault();
+});
+
+// 3. When we drop, let go
 list.addEventListener("dragend", (e) => {
   const li = e.target.closest("li.task");
   if (!li) return;
@@ -241,39 +270,30 @@ list.addEventListener("dragend", (e) => {
   li.classList.remove("dragging");
   draggedItem = null;
 
-  //saving the nrw order
-  const newOrderIds = [...list.querySelectorAll(".task")].map(item => Number(item.dataset.id));
+  // Save the new order
+  const visibleIds = [...list.querySelectorAll(".task")].map(item => Number(item.dataset.id));
 
-  //rebuild task array, from the new order
-  tasks = newOrderIds.map(id => tasks.find(t => t.id === id));
+  const newTasks = [];
+  visibleIds.forEach(id => {
+    const found = tasks.find(t => t.id === id);
+    if (found) newTasks.push(found);
+  });
+
+  const hiddenTasks = tasks.filter(t => !visibleIds.includes(t.id));
+  tasks = [...newTasks, ...hiddenTasks];
+
   saveTasks();
+  renderTasks();
 });
 
-//while dragging overother items
-list.addEventListener("dragover", (e) => {
-  e.preventDefault();
-
-  const afterElemet = getDragAfterElement(list, e.clientY);
-  const draggable = document.querySelector(".dragging");
-
-  if (!draggable) return;
-  if (afterElemet == null) {
-    list.appendChild(draggable);
-  } else {
-    list.insertBefore(draggable, afterElemet);
-  }
-});
-
-//helper func, calcs exact utem hovering over
-function getDragAfterElemet(container, y) {
-  //group all tasks that are not being dragged
+// Helper function
+function getDragAfterElement(container, y) {
   const draggableElements = [...container.querySelectorAll(".task:not(.dragging)")];
 
   return draggableElements.reduce((closest, child) => {
     const box = child.getBoundingClientRect();
     const offset = y - box.top - box.height / 2;
 
-    //if the mouse is above the middle of this box, that'll be our closest target
     if (offset < 0 && offset > closest.offset) {
       return { offset: offset, element: child };
     } else {
