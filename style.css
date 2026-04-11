@@ -114,7 +114,7 @@ button:disabled {
 
 .filters button.active {
   background: var(--text-main);
-  color: white;
+  color: var(--bg-color);
 }
 
 /* ─── Task List ─────────────────────────────────────────────────────── */
