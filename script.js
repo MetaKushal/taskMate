@@ -4,12 +4,12 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 let currentFilter = localStorage.getItem("todo-filter") || "all";
 
 // ─── DOM ───────────────────────────────────────────────────────────────
-const input       = document.getElementById("task-input");
-const addBtn      = document.getElementById("add-btn");
-const list        = document.getElementById("task-list");
-const filters     = document.querySelector(".filters");
-const clearBtn    = document.getElementById("clear-completed");
-const themeToggle = document.getElementById("theme-toggle"); 
+const input = document.getElementById("task-input");
+const addBtn = document.getElementById("add-btn");
+const list = document.getElementById("task-list");
+const filters = document.querySelector(".filters");
+const clearBtn = document.getElementById("clear-completed");
+const themeToggle = document.getElementById("theme-toggle");
 
 // ─── Persistence ───────────────────────────────────────────────────────
 function saveTasks() {
@@ -18,11 +18,11 @@ function saveTasks() {
 
 // ─── Stats ─────────────────────────────────────────────────────────────
 function updateStats() {
-  const total     = tasks.length;
+  const total = tasks.length;
   const completed = tasks.filter(t => t.completed).length;
-  const pending   = total - completed;
+  const pending = total - completed;
 
-  document.getElementById("count-pending").textContent   =
+  document.getElementById("count-pending").textContent =
     `${pending} task${pending !== 1 ? "s" : ""} left`;
 
   document.getElementById("count-completed").textContent =
@@ -40,7 +40,7 @@ function renderTasks() {
   // 🚀 PHASE 3: Smart Empty States
   if (filtered.length === 0) {
     let emptyMessage = "No tasks found.";
-    
+
     if (tasks.length === 0) {
       emptyMessage = "No tasks yet. Add one above! ✨";
     } else if (currentFilter === "pending") {
@@ -52,7 +52,7 @@ function renderTasks() {
     list.innerHTML = `<li class="empty-state">${emptyMessage}</li>`;
   } else {
     list.innerHTML = filtered.map(task => `
-      <li class="task ${task.completed ? "completed" : ""}" data-id="${task.id}">
+      <li class="task ${task.completed ? "completed" : ""}" data-id="${task.id}" draggable = "true">
         <input type="checkbox" data-id="${task.id}" ${task.completed ? "checked" : ""}>
         <span>${task.text}</span>
         <button data-id="${task.id}">Delete</button>
@@ -118,7 +118,7 @@ list.addEventListener("click", (e) => {
         tasks = tasks.filter(task => task.id !== id);
         saveTasks();
         renderTasks();
-      }, 250); 
+      }, 250);
     }
   }
 
@@ -153,7 +153,7 @@ list.addEventListener("dblclick", (e) => {
 
   setTimeout(() => {
     editInput.focus();
-    editInput.select(); 
+    editInput.select();
   }, 10);
 
   function saveEdit() {
@@ -165,13 +165,13 @@ list.addEventListener("dblclick", (e) => {
       );
       saveTasks();
     }
-    
-    renderTasks(); 
+
+    renderTasks();
   }
 
   editInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") saveEdit();
-    if (e.key === "Escape") renderTasks(); 
+    if (e.key === "Escape") renderTasks();
   });
 
   editInput.addEventListener("blur", saveEdit);
@@ -194,11 +194,11 @@ filters.addEventListener("click", (e) => {
   if (e.target.tagName !== "BUTTON") return;
 
   currentFilter = e.target.dataset.filter;
-  
+
   // 🚀 PHASE 2: Save the filter choice so it remembers on refresh
   localStorage.setItem("todo-filter", currentFilter);
 
-  renderTasks(); 
+  renderTasks();
 });
 
 // 🚀 PHASE 3: Dark Mode Logic ───────────────────────────────────────────
@@ -211,15 +211,77 @@ if (localStorage.getItem("theme") === "dark") {
 // 2. Listen for clicks to toggle
 themeToggle.addEventListener("click", () => {
   document.body.classList.toggle("dark");
-  
+
   const isDark = document.body.classList.contains("dark");
-  
+
   // Update button icon
   themeToggle.textContent = isDark ? "☀️" : "🌙";
-  
+
   // Save preference
   localStorage.setItem("theme", isDark ? "dark" : "light");
 });
+
+//Drag and Drop logic ──────────────────────────────────────────────────────────────
+let draggedItem = null;
+
+//wehen we start dragging
+list.addEventListener("dragstart", (e) => {
+  const li = e.target.closest("li.task");
+  if (!li) return;
+
+  draggedItem = li;
+  setTimeout(() => li.classList.add("dragging"), 0);
+});
+
+//when drop, let go
+list.addEventListener("dragend", (e) => {
+  const li = e.target.closest("li.task");
+  if (!li) return;
+
+  li.classList.remove("dragging");
+  draggedItem = null;
+
+  //saving the nrw order
+  const newOrderIds = [...list.querySelectorAll(".task")].map(item => Number(item.dataset.id));
+
+  //rebuild task array, from the new order
+  tasks = newOrderIds.map(id => tasks.find(t => t.id === id));
+  saveTasks();
+});
+
+//while dragging overother items
+list.addEventListener("dragover", (e) => {
+  e.preventDefault();
+
+  const afterElemet = getDragAfterElement(list, e.clientY);
+  const draggable = document.querySelector(".dragging");
+
+  if (!draggable) return;
+  if (afterElemet == null) {
+    list.appendChild(draggable);
+  } else {
+    list.insertBefore(draggable, afterElemet);
+  }
+});
+
+//helper func, calcs exact utem hovering over
+function getDragAfterElemet(container, y) {
+  //group all tasks that are not being dragged
+  const draggableElements = [...container.querySelectorAll(".task:not(.dragging)")];
+
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+
+    //if the mouse is above the middle of this box, that'll be our closest target
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
 
 // ─── Init ──────────────────────────────────────────────────────────────
 renderTasks();

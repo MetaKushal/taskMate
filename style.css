@@ -130,10 +130,22 @@ button:disabled {
   padding: 12px 8px;
   border-bottom: 1px solid var(--border-color);
   gap: 12px;
+  cursor: grab;
   
   /* ✨ Animations from Phase 2 */
   animation: fadeIn 0.3s ease-out;
   transition: all 0.2s ease-in-out;
+}
+
+.task:active{
+  cursor: grabbing;
+}
+
+.task.dragging{
+  opacity: 0.4;
+  background: var(--bg-color);
+  border: 2px dashed var(--primary);
+  transform: scale(0.98);
 }
 
 .task:hover {
