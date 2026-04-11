@@ -1,3 +1,6 @@
+/* ─── Premium Typography ────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap');
+
 /* ─── Variables & Reset ─────────────────────────────────────────────── */
 * {
   box-sizing: border-box;
@@ -9,59 +12,119 @@
   --primary: #3b82f6;     /* Modern Blue */
   --primary-hover: #2563eb;
   --bg-color: #f3f4f6;
-  --card-bg: #ffffff;
+  --card-bg: rgba(255, 255, 255, 0.6); /* 🪟 Frosted Glass light mode */
   --text-main: #1f2937;
   --text-muted: #6b7280;
-  --border-color: #e5e7eb;
+  --border-color: rgba(255, 255, 255, 0.5); /* 🪟 Glossy borders */
   --danger: #ef4444;      /* Red for delete */
 }
 
+/* 🚀 PHASE 3: Dark Mode (Moved up so variables set correctly) */
+body.dark {
+  --bg-color: #111827;     /* Very dark gray */
+  --card-bg: rgba(31, 41, 55, 0.5); /* 🪟 Frosted Glass dark mode */
+  --text-main: #f9fafb;    /* Off-white text */
+  --text-muted: #9ca3af;   /* Dimmed text */
+  --border-color: rgba(255, 255, 255, 0.1); /* Subtle dark glass border */
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-  background: var(--bg-color);
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* ✨ Smooth Mesh Gradient Background */
+  background: radial-gradient(circle at top left, #a1c4fd 0%, #c2e9fb 100%);
+  background-attachment: fixed;
   color: var(--text-main);
   display: flex;
   justify-content: center;
   margin-top: 50px;
+  min-height: 100vh;
+  transition: background 0.3s ease;
 }
 
-/* ─── Main Container ────────────────────────────────────────────────── */
+body.dark {
+  /* ✨ Deep Mesh Gradient for Dark Mode */
+  background: radial-gradient(circle at top left, #1e3a8a 0%, #0f172a 100%);
+  background-attachment: fixed;
+}
+
+/* ─── Main Container (Glassmorphism applied) ────────────────────────── */
 .app {
-  width: 400px;
+  width: 100%;
+  max-width: 420px;
   background: var(--card-bg);
   padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  border-radius: 16px; /* Slightly rounder for modern feel */
+  
+  /* 🪟 The Magic Glass Effect */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
-h1 {
-  text-align: center;
-  font-size: 1.5rem;
+body.dark .app {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); /* Stronger shadow in dark mode */
+}
+
+/* ─── Header ────────────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 20px;
+}
+
+.header h1 {
+  font-size: 1.6rem;
+  margin-bottom: 0; 
   color: var(--text-main);
   letter-spacing: 1px;
+  font-weight: 600;
+}
+
+#theme-toggle {
+  background: transparent;
+  font-size: 1.4rem;
+  padding: 5px;
+}
+
+#theme-toggle:hover {
+  transform: scale(1.1);
 }
 
 /* ─── Inputs & Buttons (General) ────────────────────────────────────── */
 button {
   border: none;
-  border-radius: 6px;
+  border-radius: 8px; /* Rounder corners */
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  font-family: inherit;
 }
 
 input[type="text"] {
   border: 1px solid var(--border-color);
-  border-radius: 6px;
-  padding: 10px;
+  border-radius: 8px;
+  padding: 10px 14px;
   font-size: 1rem;
   outline: none;
-  transition: border-color 0.2s;
+  background: rgba(255, 255, 255, 0.5); /* Semi-transparent inputs */
+  color: var(--text-main);
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+body.dark input[type="text"] {
+  background: rgba(0, 0, 0, 0.2);
 }
 
 input[type="text"]:focus {
   border-color: var(--primary);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+body.dark input[type="text"]:focus {
+  background: rgba(0, 0, 0, 0.4);
 }
 
 /* ─── Input Section ─────────────────────────────────────────────────── */
@@ -76,21 +139,23 @@ input[type="text"]:focus {
 }
 
 #add-btn {
-  padding: 10px 16px;
+  padding: 10px 20px;
   background: var(--primary);
   color: white;
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
 }
 
 #add-btn:hover:not(:disabled) {
   background: var(--primary-hover);
+  transform: translateY(-1px);
 }
 
-/* ✨ NEW: Disabled State */
 button:disabled {
-  background: var(--border-color);
-  color: var(--text-muted);
+  background: var(--text-muted);
+  color: rgba(255, 255, 255, 0.7);
   cursor: not-allowed;
-  opacity: 0.7;
+  opacity: 0.5;
+  box-shadow: none;
 }
 
 /* ─── Filters ───────────────────────────────────────────────────────── */
@@ -103,18 +168,23 @@ button:disabled {
 .filters button {
   flex: 1;
   padding: 8px;
-  background: var(--bg-color);
+  background: transparent; /* Makes buttons blend into the glass */
   color: var(--text-muted);
   border: 1px solid transparent;
 }
 
 .filters button:hover {
-  background: var(--border-color);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+body.dark .filters button:hover {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .filters button.active {
-  background: var(--text-main);
-  color: var(--bg-color);
+  background: var(--primary); /* The Pro UI fix for active filters! */
+  color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
 }
 
 /* ─── Task List ─────────────────────────────────────────────────────── */
@@ -127,69 +197,98 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 8px;
+  padding: 12px 10px;
   border-bottom: 1px solid var(--border-color);
   gap: 12px;
   cursor: grab;
   
-  /* ✨ Animations from Phase 2 */
   animation: fadeIn 0.3s ease-out;
-  transition: all 0.2s ease-in-out;
+  transition: transform 0.2s ease-in-out, background 0.2s;
+  border-radius: 8px; /* Smooth hover edges */
 }
 
-.task:active{
+.task:active {
   cursor: grabbing;
 }
 
-.task.dragging{
+.task.dragging {
   opacity: 0.4;
-  background: var(--bg-color);
+  background: var(--border-color);
   border: 2px dashed var(--primary);
   transform: scale(0.98);
 }
 
 .task:hover {
-  transform: translateX(4px); /* Slight nudge on hover */
+  transform: translateX(4px);
+  background: rgba(0, 0, 0, 0.02); /* Slight highlight on hover */
 }
 
-/* Push the text to take up remaining space */
+body.dark .task:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
 .task span {
   flex: 1;
-  cursor: pointer; /* Hints that it can be clicked/double-clicked */
+  cursor: pointer;
   transition: color 0.2s;
+  font-size: 1.05rem;
 }
 
 .task.completed span {
   text-decoration: line-through;
   color: var(--text-muted);
+  opacity: 0.7;
 }
 
-/* Checkbox styling */
+/* ✨ NEW: Custom Circular Checkboxes */
 .task input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--primary);
+  border-radius: 50%;
   cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  background: transparent;
 }
 
-/* Inline Edit Input (When double-clicking) */
+.task input[type="checkbox"]:checked {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.task input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
 .task input[type="text"] {
   flex: 1;
-  padding: 4px 8px;
+  padding: 6px 10px;
   border: 2px solid var(--primary);
-  margin: -6px 0; /* Keeps the row height from jumping */
+  margin: -6px 0;
 }
 
-/* Delete Button */
 .task button {
   padding: 6px 10px;
-  background: #fee2e2;
+  background: rgba(239, 68, 68, 0.1);
   color: var(--danger);
   font-size: 0.85rem;
-  opacity: 0; /* Hide by default for a cleaner look */
+  opacity: 0; 
+  border-radius: 6px;
 }
 
 .task:hover button {
-  opacity: 1; /* Show when hovering over the row */
+  opacity: 1; 
 }
 
 .task button:hover {
@@ -197,7 +296,6 @@ button:disabled {
   color: white;
 }
 
-/* ✨ Slide out animation when deleting */
 .task.fade-out {
   opacity: 0;
   transform: translateX(20px);
@@ -212,11 +310,15 @@ button:disabled {
 .empty-state {
   text-align: center;
   color: var(--text-muted);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   padding: 30px 0;
-  background: var(--bg-color);
-  border-radius: 8px;
-  border: 1px dashed var(--border-color);
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 12px;
+  border: 1px dashed var(--text-muted);
+}
+
+body.dark .empty-state {
+  background: rgba(255, 255, 255, 0.02);
 }
 
 /* ─── Stats & Footer ────────────────────────────────────────────────── */
@@ -228,17 +330,19 @@ button:disabled {
   color: var(--text-muted);
   border-top: 1px solid var(--border-color);
   padding-top: 15px;
+  font-weight: 300;
 }
 
 #clear-completed {
   background: transparent;
   color: var(--text-muted);
   padding: 4px 8px;
-  text-decoration: underline;
+  text-decoration: none;
+  transition: color 0.2s;
 }
 
 #clear-completed:hover {
-  color: var(--text-main);
+  color: var(--danger); /* Make it glow red on hover so they know it deletes! */
 }
 
 /* ✨ Keyboard Navigation Outlines */
@@ -246,35 +350,4 @@ button:focus-visible,
 input:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
-}
-
-/* 🚀 PHASE 3: Dark Mode */
-body.dark {
-  --bg-color: #111827;     /* Very dark gray */
-  --card-bg: #1f2937;      /* Slightly lighter dark gray */
-  --text-main: #f9fafb;    /* Off-white text */
-  --text-muted: #9ca3af;   /* Dimmed text */
-  --border-color: #374151; /* Dark borders */
-}
-
-/* Header styling to put the title and button side-by-side */
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.header h1 {
-  margin-bottom: 0; /* Remove old margin */
-}
-
-#theme-toggle {
-  background: transparent;
-  font-size: 1.4rem;
-  padding: 5px;
-}
-
-#theme-toggle:hover {
-  transform: scale(1.1);
 }
